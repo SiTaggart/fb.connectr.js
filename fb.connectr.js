@@ -178,6 +178,8 @@ fbc.connectr = function (opts) {
 		//facebooks async init function attached to the window.
 		window.fbAsyncInit = function() {
 			//initialise the SDK with supplied option
+			log('fb.init called');
+			/*
 			FB.init({
 				appId      : self.options.apiKey, // App ID
 				channelUrl : self.options.channelURL, // Channel File
@@ -186,10 +188,13 @@ fbc.connectr = function (opts) {
 				cookie     : true, // enable cookies to allow the server to access the session
 				xfbml      : true  // parse XFBML
 			});
+			*/
 
 			//ie hacks
-			//FB.UIServer.setActiveNode = function (a, b) { FB.UIServer._active[a.id] = b; }; // IE hacks to correct FB bugs -- http://bugs.developers.facebook.net/show_bug.cgi?id=19042 & 20168
-			//FB.UIServer.setLoadedNode = function (a, b) { FB.UIServer._loadedNodes[a.id] = b; };
+			if($.browser.msie) {
+				FB.UIServer.setActiveNode = function (a, b) { FB.UIServer._active[a.id] = b; }; // IE hacks to correct FB bugs -- http://bugs.developers.facebook.net/show_bug.cgi?id=19042 & 20168
+				FB.UIServer.setLoadedNode = function (a, b) { FB.UIServer._loadedNodes[a.id] = b; };
+			}
 
 			//Facebook event to catch status change in app authorisation. Upon auth, cal the setApp method
 			//This is then caught at a later stage in the flow of the app if auth isn't requested immediately
@@ -207,6 +212,17 @@ fbc.connectr = function (opts) {
 					self.setApp();
 				}
 
+			});
+
+			//track like events and send events in GA
+			FB.Event.subscribe('edge.create', function(targetUrl) {
+				_gaq.push(['_trackSocial', 'facebook', 'like', targetUrl]);
+			});
+			FB.Event.subscribe('edge.remove', function(targetUrl) {
+				_gaq.push(['_trackSocial', 'facebook', 'unlike', targetUrl]);
+			});
+			FB.Event.subscribe('message.send', function(targetUrl) {
+				_gaq.push(['_trackSocial', 'facebook', 'send', targetUrl]);
 			});
 		};
 		
